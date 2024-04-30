@@ -42,7 +42,7 @@ export default function Home() {
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "website_data.csv";
+    a.download = "components_data.csv";
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
