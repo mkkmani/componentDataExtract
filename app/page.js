@@ -18,7 +18,7 @@ export default function Home() {
         componentDsl: each.dsl
       }));
       setDataArray([...dataArray, ...mapData]);
-      setData('')
+      setData()
       console.log(dataArray);
     } catch (error) {
       console.error('Error validating data:', error);
