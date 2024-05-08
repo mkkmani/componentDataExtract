@@ -6,6 +6,7 @@ import Link from "next/link";
 export default function Home() {
   const [data, setData] = useState();
   const [dataArray, setDataArray] = useState([]);
+  const [type, setType] = useState("components");
 
   const validateData = () => {
     try {
@@ -19,13 +20,30 @@ export default function Home() {
       }));
       setDataArray([...dataArray, ...mapData]);
       setData();
-      console.log(dataArray);
     } catch (error) {
-      console.error("Error validating data:", error);
+      console.error("Error in extracting data:", error);
     }
   };
 
-  const downloadAsCSV = () => {
+  const validateUiElements = () => {
+    try {
+      const reqData = data.data.map((each) => each.document);
+
+      const mapData = reqData.data.map((ui) => ({
+        packname: ui.cp_name,
+        packId: ui.cp_id,
+        elementName: ui.name,
+        elementId: ui.id,
+        dslImage: ui.dslImageUrl,
+      }));
+    } catch (error) {
+      console.log("error in extracting data", error);
+    }
+
+    setDataArray([...dataArray, ...mapData]);
+  };
+
+  const downloadComponentCSV = () => {
     const headers = [
       "Pack name",
       "Pack ID",
@@ -56,9 +74,53 @@ export default function Home() {
     window.URL.revokeObjectURL(url);
   };
 
+  const downloadUiCSV = () => {
+    const headers = [
+      "Pack name",
+      "Pack ID",
+      "Element name",
+      "Element ID",
+      "Element DSL",
+    ];
+    const csvContent = [
+      headers,
+      ...dataArray.map((item) => [
+        item.packname,
+        item.packId,
+        item.elementName,
+        item.elementId,
+        item.dslImage,
+      ]),
+    ];
+    const csvRows = csvContent.map((row) => row.join(","));
+    const csvString = csvRows.join("\n");
+    const blob = new Blob([csvString], { type: "text/csv" });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "components_data.csv";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+  };
+
+
   return (
     <div className="flex flex-col w-full min-h-screen justify-start gap-8 items-center bg-gray-900 text-white rounded-md p-4">
       <div>
+        <div className="w-full flex mb-2 justify-end">
+          <select
+            className="bg-gray-600 text-gray-200 px-2 py-1 rounded-md"
+            value={type}
+            onChange={(e) => {
+              setType(e.target.value);
+            }}
+          >
+            <option value="components">Components</option>
+            <option value="ui">UI Elements</option>
+          </select>
+        </div>
         <textarea
           type="text"
           placeholder="Enter the JSON data here"
@@ -80,49 +142,83 @@ export default function Home() {
           type="button"
           onClick={validateData}
         >
-          Validate Data
+          Extract Data
         </button>
         <button
           className="border p-2 rounded-md hover:bg-red-500 hover: shadow-md"
           type="button"
-          onClick={downloadAsCSV}
+          onClick={type === "components" ? downloadComponentCSV : downloadUiCSV}
         >
-          Download as CSV
+          {type === "components" ? "Download components" : "Download UI"}
         </button>
       </div>
 
       <div className="border rounded-xl w-[840px] p-4">
-        <h1 className="font-bold">Component results</h1>
-        <h2>Total components: {dataArray.length}</h2>
+        <h1 className="font-bold">
+          {type === "components" ? "Component Data" : "UI elements Data"}
+        </h1>
+        <h2>{`${type === "components" ? "Total components" : "Total elements"
+          }: ${dataArray.length}`}</h2>
         <ul>
-          {dataArray.map((each, index) => (
-            <li
-              key={index}
-              className="border p-2 m-2 rounded-md space-y-2 overflow-hidden"
-            >
-              <p>
-                <strong className="text-red-500">Pack name:</strong>{" "}
-                {each.packname}
-              </p>
-              <p>
-                <strong className="text-red-500">Pack ID:</strong> {each.packId}
-              </p>
-              <p>
-                <strong className="text-red-500">Component name:</strong>{" "}
-                {each.componentName}
-              </p>
-              <p>
-                <strong className="text-red-500">Component Id:</strong>{" "}
-                {each.componentId}
-              </p>
-              <p>
-                <strong className="text-red-500">DSL:</strong>{" "}
-                <Link target="__blank" href={each.componentDsl}>
-                  {each.componentDsl}
-                </Link>
-              </p>
-            </li>
-          ))}
+          {type === 'components' ?
+            dataArray.map((each, index) => (
+              <li
+                key={index}
+                className="border p-2 m-2 rounded-md space-y-2 overflow-hidden"
+              >
+                <p>
+                  <strong className="text-red-500">Pack name:</strong>
+                  {each.packname}
+                </p>
+                <p>
+                  <strong className="text-red-500">Pack ID:</strong> {each.packId}
+                </p>
+                <p>
+                  <strong className="text-red-500">Component name:</strong>
+                  {each.componentName}
+                </p>
+                <p>
+                  <strong className="text-red-500">Component Id:</strong>
+                  {each.componentId}
+                </p>
+                <p>
+                  <strong className="text-red-500">DSL:</strong>
+                  <Link target="__blank" href={each.componentDsl}>
+                    {each.componentDsl}
+                  </Link>
+                </p>
+              </li>
+            ))
+            :
+            dataArray.map((each, index) => (
+              <li
+                key={index}
+                className="border p-2 m-2 rounded-md space-y-2 overflow-hidden"
+              >
+                <p>
+                  <strong className="text-red-500">Pack name:</strong>{" "}
+                  {each.packname}
+                </p>
+                <p>
+                  <strong className="text-red-500">Pack ID:</strong> {each.packId}
+                </p>
+                <p>
+                  <strong className="text-red-500">Element name:</strong>{" "}
+                  {each.elementName}
+                </p>
+                <p>
+                  <strong className="text-red-500">Element Id:</strong>{" "}
+                  {each.elementId}
+                </p>
+                <p>
+                  <strong className="text-red-500">DSL:</strong>{" "}
+                  <Link target="__blank" href={each.dslImage}>
+                    {each.dslImage}
+                  </Link>
+                </p>
+              </li>
+            ))
+          }
         </ul>
       </div>
     </div>
