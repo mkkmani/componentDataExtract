@@ -15,7 +15,10 @@
 
 # production
 /build
-
+/check.json
+/check2.json
+/comp.js
+/ui.js
 # misc
 .DS_Store
 *.pem
